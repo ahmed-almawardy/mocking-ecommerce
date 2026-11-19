@@ -1,0 +1,15 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:nova_core/nova_core.dart';
+
+class CustomerOrdersScreen extends StatefulWidget { const CustomerOrdersScreen({super.key}); @override State<CustomerOrdersScreen> createState() => _CustomerOrdersScreenState(); }
+class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
+  List<NovaOrder> orders = []; bool loading = true; String? error;
+  @override void initState() { super.initState(); _load(); }
+  Future<void> _load() async { setState(() { loading = true; error = null; }); try { final raw = await context.read<NovaApiClient>().get('/orders'); if (mounted) setState(() { orders = asMapList(raw).map(NovaOrder.fromJson).toList(); loading = false; }); } catch (e) { if (mounted) setState(() { error = '$e'; loading = false; }); } }
+  @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('My orders'), actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh))]), body: loading ? const NovaLoading() : error != null ? NovaErrorState(message: error!, onRetry: _load) : orders.isEmpty ? Center(child: Text(NovaStrings.t(context.watch<NovaLocaleController>().locale, 'empty_orders'))) : RefreshIndicator(onRefresh: _load, child: ListView.builder(padding: const EdgeInsets.all(15), itemCount: orders.length, itemBuilder: (context, i) {
+    final order = orders[i];
+    return Container(margin: const EdgeInsets.only(bottom: 11), padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), border: Border.all(color: NovaColors.border)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [Expanded(child: Text(order.orderNumber, style: const TextStyle(fontWeight: FontWeight.w900))), NovaStatusPill(order.paymentStatus)]), const SizedBox(height: 8), Text('EGP ${order.total.toStringAsFixed(2)} · ${order.createdAt?.toLocal().toString().split('.').first ?? ''}', style: const TextStyle(color: NovaColors.muted, fontSize: 11)), if (order.items.isNotEmpty) ...[const Divider(height: 20), ...order.items.map((item) => Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Row(children: [Expanded(child: Text('${item['product_name'] ?? 'Product'} × ${item['quantity'] ?? 1}', style: const TextStyle(fontSize: 12))), Text('EGP ${item['line_total'] ?? ''}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800))])))], if (order.paymentStatus == 'pending') Align(alignment: Alignment.centerRight, child: TextButton(onPressed: () async { try { final r = await context.read<NovaApiClient>().post('/orders/${order.orderNumber}/payment-session'); final url = '${asMap(r)['payment_url'] ?? ''}'; if (url.isNotEmpty) await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication); } catch (e) { if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'))); } }, child: const Text('Continue payment →')))]));
+  })));
+}

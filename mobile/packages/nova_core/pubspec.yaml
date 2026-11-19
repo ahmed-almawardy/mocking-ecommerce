@@ -1,0 +1,30 @@
+name: nova_core
+description: Shared NOVA HOME mobile API, design system and commerce components.
+version: 1.0.0+1
+publish_to: none
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  app_links: ^6.4.1
+  dio: ^5.7.0
+  cross_file: ^0.3.4+2
+  fl_chart: ^0.70.2
+  flutter_secure_storage: ^9.2.4
+  intl: ^0.20.2
+  path_provider: ^2.1.5
+  provider: ^6.1.2
+  share_plus: ^10.1.4
+  url_launcher: ^6.3.1
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/products/
+    - assets/offers/

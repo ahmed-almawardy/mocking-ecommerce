@@ -1,0 +1,13 @@
+<script setup lang="ts">
+const cart = useCart()
+const money = (value: number) => new Intl.NumberFormat('en-EG', { style:'currency', currency:'EGP', maximumFractionDigits:0 }).format(value)
+const shipping = computed(() => cart.subtotal.value >= 2000 || cart.subtotal.value === 0 ? 0 : 75)
+</script>
+
+<template>
+  <section class="page-hero compact"><div class="container"><div class="breadcrumbs"><NuxtLink to="/">Home</NuxtLink><span>/</span><span>Your cart</span></div><span class="eyebrow">JUST A FEW STEPS AWAY</span><h1>Your shopping cart</h1><p>Review your selection before moving to secure checkout.</p></div></section>
+  <section class="section container cart-layout">
+    <div class="cart-items-panel"><div v-if="cart.lines.value.length" class="cart-table"><div class="cart-table-head"><span>Product</span><span>Quantity</span><span>Total</span></div><div v-for="line in cart.lines.value" :key="line.product.id" class="cart-line"><div class="cart-product"><ProductArtwork :category="line.product.category"/><div><NuxtLink :to="`/products/${line.product.slug}`"><b>{{ line.product.name }}</b></NuxtLink><small>{{ line.product.category }}</small><button class="remove-link" @click="cart.remove(line.product.id)">Remove</button></div></div><div class="quantity-control"><button @click="cart.update(line.product.id, line.quantity - 1)">−</button><span>{{ line.quantity }}</span><button @click="cart.update(line.product.id, line.quantity + 1)">＋</button></div><b class="line-total">{{ money(Number(line.product.price) * line.quantity) }}</b></div></div><div v-else class="empty-state"><span>▢</span><h2>Your cart is waiting</h2><p>You haven't added any products yet.</p><NuxtLink to="/products" class="btn btn-primary">Explore products <span>→</span></NuxtLink></div></div>
+    <aside class="order-summary"><h2>Order summary</h2><div><span>Subtotal</span><b>{{ money(cart.subtotal.value) }}</b></div><div><span>Delivery</span><b>{{ shipping === 0 ? 'Free' : money(shipping) }}</b></div><div class="summary-total"><span>Estimated total</span><b>{{ money(cart.subtotal.value + shipping) }}</b></div><p v-if="cart.subtotal.value > 0 && cart.subtotal.value < 2000" class="shipping-hint">Add {{ money(2000 - cart.subtotal.value) }} more to qualify for free delivery.</p><NuxtLink v-if="cart.lines.value.length" to="/checkout" class="btn btn-primary checkout-link">Continue to checkout <span>→</span></NuxtLink><NuxtLink v-else to="/products" class="btn btn-primary checkout-link">Start shopping <span>→</span></NuxtLink><div class="secure-note">▣ Secure checkout · EGP</div></aside>
+  </section>
+</template>

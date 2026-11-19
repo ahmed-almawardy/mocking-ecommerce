@@ -1,0 +1,85 @@
+name: Flutter mobile CI
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [customer_app, admin_app]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.50.0'
+          channel: stable
+          cache: true
+      - name: Generate Android and iOS runner scaffolding
+        run: ./mobile/tool/bootstrap_native.sh ${{ matrix.app == 'customer_app' && 'customer' || 'admin' }}
+      - name: Resolve shared package
+        working-directory: mobile/packages/nova_core
+        run: flutter pub get
+      - name: Analyze shared NOVA package
+        working-directory: mobile/packages/nova_core
+        run: flutter analyze
+      - name: Test shared NOVA package
+        working-directory: mobile/packages/nova_core
+        run: flutter test
+      - name: Resolve app packages
+        working-directory: mobile/apps/${{ matrix.app }}
+        run: flutter pub get
+      - name: Analyze app
+        working-directory: mobile/apps/${{ matrix.app }}
+        run: flutter analyze
+      - name: Run app tests
+        working-directory: mobile/apps/${{ matrix.app }}
+        run: flutter test
+      - name: Build Android debug APK
+        working-directory: mobile/apps/${{ matrix.app }}
+        run: flutter build apk --debug --dart-define=API_BASE_URL=https://api.example.invalid
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.app }}-android-debug
+          path: mobile/apps/${{ matrix.app }}/build/app/outputs/flutter-apk/app-debug.apk
+  ios:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [customer_app, admin_app]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.50.0'
+          channel: stable
+          cache: true
+      - name: Generate Android and iOS runner scaffolding
+        run: ./mobile/tool/bootstrap_native.sh ${{ matrix.app == 'customer_app' && 'customer' || 'admin' }}
+      - name: Resolve shared package
+        working-directory: mobile/packages/nova_core
+        run: flutter pub get
+      - name: Analyze shared NOVA package
+        working-directory: mobile/packages/nova_core
+        run: flutter analyze
+      - name: Test shared NOVA package
+        working-directory: mobile/packages/nova_core
+        run: flutter test
+      - name: Resolve app packages
+        working-directory: mobile/apps/${{ matrix.app }}
+        run: flutter pub get
+      - name: Analyze app
+        working-directory: mobile/apps/${{ matrix.app }}
+        run: flutter analyze
+      - name: Run app tests
+        working-directory: mobile/apps/${{ matrix.app }}
+        run: flutter test
+      - name: Build iOS without signing
+        working-directory: mobile/apps/${{ matrix.app }}
+        run: flutter build ios --debug --no-codesign --dart-define=API_BASE_URL=https://api.example.invalid
