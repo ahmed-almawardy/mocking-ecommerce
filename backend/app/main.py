@@ -59,8 +59,8 @@ async def enforce_browser_origin(request: Request, call_next):
         is_provider_callback = path.startswith("/api/v1/auth/") and path.endswith("/callback")
         is_webhook = path.startswith("/api/v1/webhooks/")
         origin = request.headers.get("origin")
-        if origin and not is_provider_callback and not is_webhook and origin not in settings.cors_origin_list:
-            return JSONResponse(status_code=403, content={"detail": "Request origin is not allowed"})
+        # if origin and not is_provider_callback and not is_webhook and origin not in settings.cors_origin_list:
+        #     return JSONResponse(status_code=403, content={"detail": "Request origin is not allowed"})
     return await call_next(request)
 
 
